@@ -24,7 +24,7 @@ comb_daynums = comb_daynums.astype(int)
 cohort_data = pd.read_csv('all_cohorts_2019.csv')
 cohort_colornames = np.unique(cohort_data['cohort'])
 cohort_tagids = [np.array(cohort_data[cohort_data['cohort']==name]['beeID']) for name in cohort_colornames]
-cohort_birthdates = np.array([pd.Timestamp(np.array(cohort_data['DOB'][cohort_data['cohort']==c])[0],freq='D') for c in cohort_colornames])
+cohort_birthdates = np.array([pd.Timestamp(np.array(cohort_data['DOB'][cohort_data['cohort']==c])[0]) for c in cohort_colornames])
 cohort_colonynames = np.array([cohort_data[cohort_data['cohort']==name]['colony'].iloc[0] for name in cohort_colornames])
 
 numbeestracked = np.sum([len(l) for l in cohort_tagids])

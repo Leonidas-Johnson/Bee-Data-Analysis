@@ -61,21 +61,27 @@ cbar_ax.set_title("Age (days)", fontsize=8, pad=2)
 age_groups = sorted(df_slice["age(days)"].dropna().unique())
 
 # ── ffmpeg pipe ───────────────────────────────────────────────────────────────
-width  = int(fig.get_figwidth() * fig.dpi)
-height = int(fig.get_figheight() * fig.dpi)
-chunk_output = os.path.join(output_dir, f"chunk_{chunk_id:04d}.mp4")
+# width  = int(fig.get_figwidth() * fig.dpi)
+# height = int(fig.get_figheight() * fig.dpi)
+# chunk_output = os.path.join(output_dir, f"chunk_{chunk_id:04d}.mp4")
 
-ffmpeg_cmd = [
-    "ffmpeg", "-y",
-    "-f", "rawvideo", "-vcodec", "rawvideo",
-    "-s", f"{width}x{height}",
-    "-pix_fmt", "rgb24", "-r", str(FPS),
-    "-i", "pipe:0",
-    "-vcodec", "libx264", "-pix_fmt", "yuv420p", "-crf", "23",
-    chunk_output
-]
+# ffmpeg_cmd = [
+#    "ffmpeg", "-y",
+#    "-f", "rawvideo", "-vcodec", "rawvideo",
+#    "-s", f"{width}x{height}",
+#    "-pix_fmt", "rgb24", "-r", str(FPS),
+#    "-i", "pipe:0",
+#    "-vcodec", "libx264", "-pix_fmt", "yuv420p", "-crf", "23",
+#    chunk_output
+# ]
 
-proc = subprocess.Popen(ffmpeg_cmd, stdin=subprocess.PIPE)
+# proc = subprocess.Popen(ffmpeg_cmd, stdin=subprocess.PIPE)
+
+# ── added: frame pipe ─────────────────────────────────────────────────────────
+
+frames_dir = os.path.join(output_dir, f"chunk_{chunk_id:04d}")
+os.makedirs(frames_dir, exist_ok=True)
+
 
 # ── One-time background capture (includes the static colorbar) ───────────────
 fig.canvas.draw()
@@ -128,13 +134,17 @@ for i, frame_number in enumerate(frame_indices):
 
     fig.canvas.blit(fig.bbox)
 
-    buf = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
-    proc.stdin.write(buf.tobytes())
+#    buf = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
+#    proc.stdin.write(buf.tobytes())
+
+    rgba = np.asarray(fig.canvas.buffer_rgba())         # added
+    plt.imsave(os.path.join(frames_dir, f"frame_{frame_number:07d}.png"), rgba)         # added
 
     if i % 500 == 0:
         print(f"[Chunk {chunk_id}] Frame {i+1}/{len(frame_indices)}", flush=True)
 
-proc.stdin.close()
-proc.wait()
+# proc.stdin.close()
+# proc.wait()
 plt.close(fig)
-print(f"[Chunk {chunk_id}] Done → {chunk_output}", flush=True)
+# print(f"[Chunk {chunk_id}] Done → {chunk_output}", flush=True)
+print(f"[Chunk {chunk_id}] Done → {frames_dir}", flush=True)            # added
